@@ -1,0 +1,16 @@
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\bin\Debug\net5.0\RemoteTCPServer.exe
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\bin\Debug\net5.0\RemoteTCPServer.deps.json
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\bin\Debug\net5.0\RemoteTCPServer.runtimeconfig.json
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\bin\Debug\net5.0\RemoteTCPServer.runtimeconfig.dev.json
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\bin\Debug\net5.0\RemoteTCPServer.dll
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\bin\Debug\net5.0\ref\RemoteTCPServer.dll
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\bin\Debug\net5.0\RemoteTCPServer.pdb
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\obj\Debug\net5.0\RemoteTCPServer.csprojAssemblyReference.cache
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\obj\Debug\net5.0\RemoteTCPServer.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\obj\Debug\net5.0\RemoteTCPServer.AssemblyInfoInputs.cache
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\obj\Debug\net5.0\RemoteTCPServer.AssemblyInfo.cs
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\obj\Debug\net5.0\RemoteTCPServer.csproj.CoreCompileInputs.cache
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\obj\Debug\net5.0\RemoteTCPServer.dll
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\obj\Debug\net5.0\ref\RemoteTCPServer.dll
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\obj\Debug\net5.0\RemoteTCPServer.pdb
+C:\Users\owenf\source\repos\RemoteTCPServer\RemoteTCPServer\obj\Debug\net5.0\RemoteTCPServer.genruntimeconfig.cache
