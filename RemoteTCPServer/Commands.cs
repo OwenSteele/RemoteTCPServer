@@ -57,18 +57,63 @@ namespace RemoteTCPServer
             if (serverClient.CUser.AllowedAccess(0))
             {
                 string clientList = null;
+                int clientPos = 1;
                 foreach(ServerClient client in Server.clients)
                 {
-                    clientList += $"\nEnd point: {client.CSocket.LocalEndPoint}\n" +
+                    clientList += $"\n\nID: {(client.ID ?? "Not logged in")}\n" +
+                        $"\nConnection order: {clientPos}\n" +
+                        $"\nEnd point: {client.CSocket.LocalEndPoint}\n" +
                         $"Handle: {client.CSocket.Handle}\n" +
                         $"Ttl: {client.CSocket.Ttl}\n" +
                         $"Data value: {client.CSocket.Available}\n" +
                         $"Protocol type: {client.CSocket.ProtocolType}";
+                    
+                    clientPos++;
                 }
                 return clientList;
-            }
-            
+            }            
             return "Access Level not high enough.";
+        }
+        public static string KickClient(ServerClient serverClient, int pos)
+        {
+            if (serverClient.CUser.AllowedAccess(0))
+            {
+               if(pos > 0 && pos < Server.clients.Count)
+               {
+                   //client.kick;
+                   
+                   clients.Remove[pos];
+                   return "Client removed - NOTE: client positions will have changed";
+               }
+                return "Client position not found.";
+            }
+            return "Access Level not high enough.";
+        }        
+        public static string RestartServer(ServerClient serverClient, string confirmed)
+        {
+            if (serverClient.CUser.AllowedAccess(0))
+            {
+               if(confirmed == "force")
+               {
+                   //Build restart function, flush everything, loop round to start
+                   
+                   return "Server Restarted.";
+               }
+                return "Restart requires 'force', to confrim call.";
+            }
+            return "Access Level not high enough.";
+        }
+        public static string SeePersonalInfo(ServerClient serverClient)
+        {
+                    clientDetails += $"\n\nID: {(cserverClient.ID ?? "Not logged in")}\n" +
+                        $"\nConnection order: {}\n" + // Needs position added
+                        $"\nEnd point: {serverClient.CSocket.LocalEndPoint}\n" +
+                        $"Handle: {serverClient.CSocket.Handle}\n" +
+                        $"Ttl: {serverClient.CSocket.Ttl}\n" +
+                        $"Data value: {serverClient.CSocket.Available}\n" +
+                        $"Protocol type: {serverClient.CSocket.ProtocolType}";
+         
+                return clientDetails;
         }
     }
 }
