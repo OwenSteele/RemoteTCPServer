@@ -19,6 +19,7 @@ namespace RemoteTCPServer
         private static int serverPort = 0;
         private static string externalIP = null;
 
+
         private static bool sslEnabled = false;
         internal static X509Certificate serverCertificate = null;
         //the clients sever name must match with this

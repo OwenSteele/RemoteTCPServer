@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace RemoteTCPServer
 {
     public static class OpenCommands
     {
-        public static string currentTag;
+        public static string currentTag = null;
         public static string GetTime(ServerClient serverClient) => DateTime.Now.ToLongTimeString();
         public static string Login(ServerClient serverClient)
         {
@@ -45,45 +42,44 @@ namespace RemoteTCPServer
                     serverClient.CUser = user;
                     return true;
                 }
-
             return false;
         }
     }
     public static class UserCommands
     {
+        public static string directoryPath = null;
         public static string GetAllClients(ServerClient serverClient, string[] args = null)
         {
+            if (!serverClient.CUser.AllowedAccess(0)) return "Access Level not high enough.";
 
-            if (serverClient.CUser.AllowedAccess(0))
+            string clientList = null;
+            int clientPos = 1;
+            foreach (ServerClient client in Server.clients)
             {
-                string clientList = null;
-                int clientPos = 1;
-                foreach(ServerClient client in Server.clients)
-                {
-                    string clientID = "Not logged in";
-                    if (client.CUser != null) clientID = client.CUser.ID;
-                    clientList += $"\n\nID: {clientID}\n" +
-                        $"Connection order: {clientPos}\n" +
-                        $"End point: {client.CSocket.LocalEndPoint}\n" +
-                        $"Handle: {client.CSocket.Handle}\n" +
-                        $"Ttl: {client.CSocket.Ttl}\n" +
-                        $"Data value: {client.CSocket.Available}\n" +
-                        $"Protocol type: {client.CSocket.ProtocolType}";
-                    
-                    clientPos++;
-                }
-                return clientList;
-            }            
-            return "Access Level not high enough.";
+                string clientID = "Not logged in";
+                if (client.CUser != null) clientID = client.CUser.ID;
+                clientList += $"\n\nClient machine name: {client.MachineName}\n" +
+                    $"Client IP: {client.IP}\n" +
+                    $"User ID: {clientID}\n" +
+                    $"Connection order: {clientPos}\n" +
+                    $"Handle: {client.CSocket.Handle}\n" +
+                    $"Ttl: {client.CSocket.Ttl}\n" +
+                    $"Data value: {client.CSocket.Available}\n" +
+                    $"Protocol type: {client.CSocket.ProtocolType}";
+
+                clientPos++;
+            }
+            return clientList;
         }
         public static string KickClient(ServerClient serverClient, string[] strPos)
         {
-            if(!Int32.TryParse(strPos[2], out int pos)) return $"Must input a value between 1 and {Server.clients.Count}";
-            if (!serverClient.CUser.AllowedAccess(0)) return "Access Level not high enough.";            
+            if (!serverClient.CUser.AllowedAccess(0)) return "Access Level not high enough.";
+
+            if(!Int32.TryParse(strPos[2], out int pos)) return $"Must input a value between 1 and {Server.clients.Count}";                       
             if (Server.clients[pos - 1].CUser.ID == serverClient.CUser.ID) return "You cannot remove this client, disconnect instead."; 
             if (pos > 0 && pos <= Server.clients.Count)
             {
-                Server.clients[pos - 1].CSocket.Close();
+                Server.clients[pos - 1].CSocket.Disconnect(true);
                 Server.clients.RemoveAt(pos - 1);
                 return "Client removed - NOTE: client positions will now have changed";
             }
@@ -113,6 +109,34 @@ namespace RemoteTCPServer
                         $"Ttl: {serverClient.CSocket.Ttl}\n" +
                         $"Data value: {serverClient.CSocket.Available}\n" +
                         $"Protocol type: {serverClient.CSocket.ProtocolType}";
+        }
+        public static string SendFileToServer(ServerClient serverClient, string[] fileData)
+        {
+            if (!serverClient.CUser.AllowedAccess(1)) return "Access Level not high enough.";
+
+            return "Function to be added";
+        }
+        public static string RecieveFileFromServer(ServerClient serverClient, string[] fileData)
+        {
+            if (!serverClient.CUser.AllowedAccess(1)) return "Access Level not high enough.";
+
+            return "Function to be added";
+        }
+        public static string SetServerDirPath(ServerClient serverClient, string[] fileData)
+        {
+            if (!serverClient.CUser.AllowedAccess(0)) return "Access Level not high enough.";
+
+            if (fileData.Length < 2 || String.IsNullOrWhiteSpace(fileData[2]))
+                return "HELP: set or change the server directory path with this command.\n" +
+                    $"{((directoryPath == null) ? "No directory set, to send or recieve files a directory needs to be set." : $"Current directory: '{directoryPath}'")}";
+
+            if (Directory.Exists(fileData[2]))
+            {
+                directoryPath = fileData[2];
+                return $"Directory successfully changed to : {fileData[2]}";
+            }
+            else return "Invalid path, directory not found";
+
         }
     }
 }
