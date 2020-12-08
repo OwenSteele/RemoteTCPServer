@@ -17,6 +17,7 @@ namespace RemoteTCPServer
         private static int backlogLimit = 10;
         private static Socket _serversocket = new (AddressFamily.InterNetwork,SocketType.Stream, ProtocolType.Tcp);
         private static int serverPort = 0;
+        private static string externalIP = null;
 
         private static bool sslEnabled = false;
         internal static X509Certificate serverCertificate = null;
@@ -25,7 +26,8 @@ namespace RemoteTCPServer
 
         private static Dictionary<string, Func<ServerClient, string>> _openCommands = new()
         {
-            { "###`INITclientINFOrequest`###", ServerDetails },
+            { "help", ListAllCommands},
+            { "serverinfo", ServerDetails },
             { "get time", OpenCommands.GetTime },
             { "login", OpenCommands.Login },
             { "logout", OpenCommands.Logout }
@@ -34,10 +36,15 @@ namespace RemoteTCPServer
         {
             { "<<login>>", ClosedCommands.LoginAttempt }
         };
-        private static Dictionary<string, Func<ServerClient, string>> _userCommands = new()
+        private static Dictionary<string, Func<ServerClient, string[], string>> _userCommands = new()
         {
-            { "list clients", UserCommands.GetAllClients }
+            { "listclients", UserCommands.GetAllClients },
+            { "clientinfo", UserCommands.SeePersonalInfo },
+            { "kickclient", UserCommands.KickClient },
+            { "server restart", UserCommands.KickClient },
         };
+        private static string ListAllCommands(ServerClient client) =>(String.Join("\n", _openCommands.Keys)) +
+            ((client.CUser == null) ? "" : ("\n\n" + String.Join(" - USERS ONLY\n", _userCommands.Keys)));
 
         static void Main()
         {     
@@ -45,9 +52,11 @@ namespace RemoteTCPServer
             SetupServer(serverName);
             CreateUsers();
 
+            Console.WriteLine();
             Console.Write("please wait...");
             Console.WriteLine($"\r {ServerDetails()}");
             Console.WriteLine("---Ready for clients---\n");
+
             while (true) ;
         }
 
@@ -83,12 +92,22 @@ namespace RemoteTCPServer
             _serversocket.BeginAccept(new AsyncCallback(AcceptCallBack), null);
             Console.WriteLine("Server set up");
 
+            Console.WriteLine("\nObtaining External IP address");
+            try
+            {
+                externalIP = new WebClient().DownloadString("http://icanhazip.com");
+            }
+            catch (Exception e)
+            {
+                externalIP = e.Message;
+            }
         }
-        private static string ServerDetails(ServerClient serverClient = null) => "---Server details---"+
-            $"\n     External IP: {new WebClient().DownloadString("http://icanhazip.com")}"+
-            $"     Local IP: {GetLocalIPAddress()}"+
-            $"\n     Port number: {serverPort}"+
-            $"\n{(sslEnabled ? $"     SSL server name : '{serverName}'" : "")}\n";
+        private static string ServerDetails(ServerClient serverClient = null) =>
+            "---Server details---" +
+            $"\n     External IP: {externalIP}" +
+            $"     Local IP: {GetLocalIPAddress()}" +
+            $"\n     Port number: {serverPort}" +
+            $"\n{(sslEnabled ? $"     SSL server name : '{serverName}'" : "")}";
         
         private static void AcceptCallBack(IAsyncResult ar)
         {
@@ -121,15 +140,27 @@ namespace RemoteTCPServer
                 Array.Copy(_buffer, dataBuffer, recieved);
                 string text = Encoding.ASCII.GetString(dataBuffer);
 
-                if (text.Contains("<<") && text.Contains(">>"))
+                if (text.Contains("###`CLIENTINFO`###"))
                 {
-                    OpenCommands.currentTag = text.Substring(text.IndexOf("<<"), (text.IndexOf(">>")-text.IndexOf("<<"))+2);
+                    string[] temp = text.Split(' ');
+                    clients.Find(s => s.CSocket == socket).MachineName = temp[2];
+                    clients.Find(s => s.CSocket == socket).IP = IPAddress.Parse(temp[3]);
                 }
 
+                if (text.Contains("<<") && text.Contains(">>"))
+                     OpenCommands.currentTag = text.Substring(text.IndexOf("<<"), (text.IndexOf(">>")-text.IndexOf("<<"))+2);
+                
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine($"$ '{text}'");
 
                 string message = ProcessRequest(text, socket);
+
+                if (text.Contains("###`CLIENTINFO`###") && !clients.Find(s => s.CSocket == socket).DetailsSent)
+                {
+                    message = "Owen's TCP server 2020.\n\n" + ServerDetails();
+                    clients.Find(s => s.CSocket == socket).DetailsSent = true;
+                }
+
                 Console.ForegroundColor = ConsoleColor.DarkCyan;
                 Console.WriteLine($"[ >> '{RemoveNewLines(message)}']");
                 Console.ForegroundColor = ConsoleColor.Gray;
@@ -175,7 +206,7 @@ namespace RemoteTCPServer
         }
         private static string ProcessRequest(string req, Socket socket)
         {
-            ServerClient serverClient = clients.Find(c => c.CSocket == socket);
+            ServerClient serverClient = GetClient(socket);
             if (req.Contains("<<") && req.Contains(">>"))
             {
                 string functionTag = null;
@@ -188,15 +219,18 @@ namespace RemoteTCPServer
             {
                 if(_openCommands.TryGetValue(req, out Func<ServerClient, string> calledFunction)) return calledFunction(serverClient);
 
-                if (serverClient != null)
-                    if (req.StartsWith(clients.Find(c => c.CSocket == socket).CUser.ID)) 
-                        if (_userCommands.TryGetValue(req.Substring(req.IndexOf(' ')+1,req.Length- (req.IndexOf(' ')+1)),
-                            out Func<ServerClient, string> calledUserFunction)) return calledUserFunction(serverClient);                        
+                if (serverClient.CUser != null)
+                    if (req.StartsWith(clients.Find(c => c.CSocket == socket).CUser.ID))
+                    {
+                        string[] reqs = req.Split(' ');
+                        if (_userCommands.TryGetValue(reqs[1],
+                            out Func<ServerClient, string[], string> calledUserFunction)) return calledUserFunction(serverClient, reqs);
+                    }
             }
             return "Invalid request";
         }
         private static string RemoveNewLines(string text) => text.Replace("\n","[nLn]");
-
         private static void CreateUsers() => UserFactory.Create();
+        private static ServerClient GetClient(Socket socket) => clients.Find(c => c.CSocket == socket);
     }
 }

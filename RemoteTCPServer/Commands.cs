@@ -51,7 +51,7 @@ namespace RemoteTCPServer
     }
     public static class UserCommands
     {
-        public static string GetAllClients(ServerClient serverClient)
+        public static string GetAllClients(ServerClient serverClient, string[] args = null)
         {
 
             if (serverClient.CUser.AllowedAccess(0))
@@ -60,9 +60,11 @@ namespace RemoteTCPServer
                 int clientPos = 1;
                 foreach(ServerClient client in Server.clients)
                 {
-                    clientList += $"\n\nID: {(client.ID ?? "Not logged in")}\n" +
-                        $"\nConnection order: {clientPos}\n" +
-                        $"\nEnd point: {client.CSocket.LocalEndPoint}\n" +
+                    string clientID = "Not logged in";
+                    if (client.CUser != null) clientID = client.CUser.ID;
+                    clientList += $"\n\nID: {clientID}\n" +
+                        $"Connection order: {clientPos}\n" +
+                        $"End point: {client.CSocket.LocalEndPoint}\n" +
                         $"Handle: {client.CSocket.Handle}\n" +
                         $"Ttl: {client.CSocket.Ttl}\n" +
                         $"Data value: {client.CSocket.Available}\n" +
@@ -74,26 +76,24 @@ namespace RemoteTCPServer
             }            
             return "Access Level not high enough.";
         }
-        public static string KickClient(ServerClient serverClient, int pos)
+        public static string KickClient(ServerClient serverClient, string[] strPos)
         {
-            if (serverClient.CUser.AllowedAccess(0))
+            if(!Int32.TryParse(strPos[2], out int pos)) return $"Must input a value between 1 and {Server.clients.Count}";
+            if (!serverClient.CUser.AllowedAccess(0)) return "Access Level not high enough.";            
+            if (Server.clients[pos - 1].CUser.ID == serverClient.CUser.ID) return "You cannot remove this client, disconnect instead."; 
+            if (pos > 0 && pos <= Server.clients.Count)
             {
-               if(pos > 0 && pos < Server.clients.Count)
-               {
-                   //client.kick;
-                   
-                   clients.Remove[pos];
-                   return "Client removed - NOTE: client positions will have changed";
-               }
-                return "Client position not found.";
+                Server.clients[pos - 1].CSocket.Close();
+                Server.clients.RemoveAt(pos - 1);
+                return "Client removed - NOTE: client positions will now have changed";
             }
-            return "Access Level not high enough.";
+            return "Client position not found.";            
         }        
-        public static string RestartServer(ServerClient serverClient, string confirmed)
+        public static string RestartServer(ServerClient serverClient, string[] confirmed)
         {
             if (serverClient.CUser.AllowedAccess(0))
             {
-               if(confirmed == "force")
+               if(confirmed[2] == "force")
                {
                    //Build restart function, flush everything, loop round to start
                    
@@ -103,17 +103,16 @@ namespace RemoteTCPServer
             }
             return "Access Level not high enough.";
         }
-        public static string SeePersonalInfo(ServerClient serverClient)
+        public static string SeePersonalInfo(ServerClient serverClient, string[] args = null)
         {
-                    clientDetails += $"\n\nID: {(cserverClient.ID ?? "Not logged in")}\n" +
-                        $"\nConnection order: {}\n" + // Needs position added
+                    return $"\n\nID: {(serverClient.CUser.ID ?? "Not logged in")}\n" +
+                        $"\nConnection order: " +
+                        $"{Server.clients.FirstOrDefault(client => client.CUser.ID == serverClient.CUser.ID).CUser.ID}\n" +
                         $"\nEnd point: {serverClient.CSocket.LocalEndPoint}\n" +
                         $"Handle: {serverClient.CSocket.Handle}\n" +
                         $"Ttl: {serverClient.CSocket.Ttl}\n" +
                         $"Data value: {serverClient.CSocket.Available}\n" +
                         $"Protocol type: {serverClient.CSocket.ProtocolType}";
-         
-                return clientDetails;
         }
     }
 }
