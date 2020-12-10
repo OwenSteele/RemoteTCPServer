@@ -21,6 +21,7 @@ namespace RemoteTCPServer
 
         public bool AllowedAccess(int accessRequired) => (_securityLevel ?? 10000) <= accessRequired;
         public bool CheckPassword(string attempt) => _password.SequenceEqual(Encoding.ASCII.GetBytes(attempt));
+        public int? GetSecurity() => _securityLevel;
     }
     public static class UserFactory
     {
@@ -32,5 +33,7 @@ namespace RemoteTCPServer
             _users.Add(new User("owen", "steele", 1));
         }
         internal static User GetUser(string id) => _users.FirstOrDefault(u => u.ID == id) ?? _users[0];
+
+         
     }
 }

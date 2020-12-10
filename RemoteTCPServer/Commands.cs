@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.IO;
+using System.Text;
 
 namespace RemoteTCPServer
 {
@@ -17,7 +18,7 @@ namespace RemoteTCPServer
                 if (serverClient.CUser.ID != null) return "You are already logged in.\n" +
                     $"To switch accounts enter 'logout {serverClient.CUser.ID}'";
             Console.ForegroundColor = ConsoleColor.Gray;
-            return "<NoH>User: #/C.RL/##/C.NL/#Password: #/C.RL/#<<login>>";
+            return "<NoH>User: #/C.RL/#Password: #/C.RL/#<<login.MR>>";
         }
         public static string Logout(ServerClient serverClient)
         {
@@ -33,16 +34,16 @@ namespace RemoteTCPServer
     }
     public static class ClosedCommands
     {
-        public static bool LoginAttempt(ServerClient serverClient, string[] details)
+        public static string LoginAttempt(ServerClient serverClient, string[] details)
         {
             User user = UserFactory.GetUser(details[0]);
             if (user.ID == details[0])
                 if (user.CheckPassword(details[1]))
                 {
                     serverClient.CUser = user;
-                    return true;
+                    return "Success, you are now logged in ";
                 }
-            return false;
+            return "Error, could not log in";
         }
     }
     public static class UserCommands
@@ -56,17 +57,7 @@ namespace RemoteTCPServer
             int clientPos = 1;
             foreach (ServerClient client in Server.clients)
             {
-                string clientID = "Not logged in";
-                if (client.CUser != null) clientID = client.CUser.ID;
-                clientList += $"\n\nClient machine name: {client.MachineName}\n" +
-                    $"Client IP: {client.IP}\n" +
-                    $"User ID: {clientID}\n" +
-                    $"Connection order: {clientPos}\n" +
-                    $"Handle: {client.CSocket.Handle}\n" +
-                    $"Ttl: {client.CSocket.Ttl}\n" +
-                    $"Data value: {client.CSocket.Available}\n" +
-                    $"Protocol type: {client.CSocket.ProtocolType}";
-
+                clientList += GetClientInfo(client);
                 clientPos++;
             }
             return clientList;
@@ -91,48 +82,83 @@ namespace RemoteTCPServer
             {
                if(confirmed[2] == "force")
                {
-                   //Build restart function, flush everything, loop round to start
-                   
-                   return "Server Restarted.";
-               }
+                    if(Server.Restart()) return "Server Restarted.";
+                    else return "Error, server could not be restarted.";
+                }
                 return "Restart requires 'force', to confrim call.";
             }
             return "Access Level not high enough.";
         }
-        public static string SeePersonalInfo(ServerClient serverClient, string[] args = null)
+        public static string GetClientInfo(ServerClient serverClient, string[] args = null)
         {
-                    return $"\n\nID: {(serverClient.CUser.ID ?? "Not logged in")}\n" +
+                    return $"\n\nID: {(serverClient.CUser == null ? "Not logged in" : serverClient.CUser.ID)}\n" +
                         $"\nConnection order: " +
-                        $"{Server.clients.FirstOrDefault(client => client.CUser.ID == serverClient.CUser.ID).CUser.ID}\n" +
+                        $"{Server.clients.FirstOrDefault(client => client.CSocket == serverClient.CSocket).CUser.ID}\n" +
                         $"\nEnd point: {serverClient.CSocket.LocalEndPoint}\n" +
                         $"Handle: {serverClient.CSocket.Handle}\n" +
                         $"Ttl: {serverClient.CSocket.Ttl}\n" +
                         $"Data value: {serverClient.CSocket.Available}\n" +
                         $"Protocol type: {serverClient.CSocket.ProtocolType}";
         }
-        public static string SendFileToServer(ServerClient serverClient, string[] fileData)
+        public static string FileSentToServer(ServerClient serverClient, string[] fileData)
         {
+            string dirMsg = $"{((directoryPath == null) ? "No directory set, must be created by admin first" : "")}";
+            string help = "HELP: Send a file of specified type to the server to be saved permanently." + dirMsg +
+                $"{((dirMsg ==null) ? "\n" : "")}  Syntax: '<userID> sendfile <full file path>'. The path must be a location on this machine.";
+
             if (!serverClient.CUser.AllowedAccess(1)) return "Access Level not high enough.";
 
-            return "Function to be added";
+            if (fileData.Length < 4) return help;
+
+            if (String.IsNullOrWhiteSpace(directoryPath)) return $"Error: {dirMsg}";
+
+            //
+            string fileName = fileData[2];
+            string fileContent = null;
+            for (int i = 3; i < fileData.Length; i++) fileContent += fileData[i] + " ";
+
+            byte[] fileBytes = Encoding.ASCII.GetBytes(fileContent);
+
+            try
+            {
+                File.WriteAllBytes(directoryPath + fileName, fileBytes);
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(ex.Message);
+                Console.ForegroundColor = ConsoleColor.Gray;
+
+                return "Could not save file to server";
+            }
+
+            return "File saved to server successfully";
         }
-        public static string RecieveFileFromServer(ServerClient serverClient, string[] fileData)
+        public static string FileByClientRequest(ServerClient serverClient, string[] fileData)
         {
             if (!serverClient.CUser.AllowedAccess(1)) return "Access Level not high enough.";
 
+            if (!File.Exists("")) return "Invalid path, directory not found";
+
+            byte[] fileBytes = File.ReadAllBytes(fileData[2]);
+            if (fileBytes.Length > Server.maxBufferSize) return "File too large to send.";
             return "Function to be added";
         }
         public static string SetServerDirPath(ServerClient serverClient, string[] fileData)
         {
+            string help = "HELP: set or change the server directory path with this command.\n" +
+                    $"{((directoryPath == null) ? "No directory set, to send or recieve files a directory needs to be set." : $"Current directory: '{directoryPath}'")}";
+
             if (!serverClient.CUser.AllowedAccess(0)) return "Access Level not high enough.";
 
-            if (fileData.Length < 2 || String.IsNullOrWhiteSpace(fileData[2]))
-                return "HELP: set or change the server directory path with this command.\n" +
-                    $"{((directoryPath == null) ? "No directory set, to send or recieve files a directory needs to be set." : $"Current directory: '{directoryPath}'")}";
+            if (fileData.Length < 3) return help;
+            if (String.IsNullOrWhiteSpace(fileData[2])) return help;
 
             if (Directory.Exists(fileData[2]))
             {
-                directoryPath = fileData[2];
+                
+                directoryPath = fileData[2].Replace('\\','/');
+                if (directoryPath.Substring(directoryPath.Length - 1, 1) != "/") directoryPath += "/";
                 return $"Directory successfully changed to : {fileData[2]}";
             }
             else return "Invalid path, directory not found";
