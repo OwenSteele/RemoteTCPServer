@@ -21,15 +21,18 @@ Can be downloaded from MDN here: https://dotnet.microsoft.com/download
 Select .NET [core/framework] runtime option and install
 
 <ins>Simple setup through GitHub</ins>
+```
 1. Download this repo as a '.zip' file, and extract once downloaded.
 2. Navigate to /RemoteTCPServer/bin/Debug/net5.
 3. Run RemoteTCPServer.exe
+```
 
 **Can also be built and run with Visual Studio**
 
 Ensure that your machine has the .NET 5.0 SDK installed
 
 <ins>Simple setup through terminal (windows)</ins>
+```
 1. cd [your chosen dir]
 2. mkdir RemoteTCPServer
 3. cd RemoteTCPServer 
@@ -37,6 +40,7 @@ Ensure that your machine has the .NET 5.0 SDK installed
 5. git clone https://github.com/OwenSteele/RemoteTCPServer.git
 6. cd /RemoteTCPServer/bin/Debug/net5.0/
 7. ./RemoteTCPServer.exe
+```
 *NOTE: step 5 requires the necessary access privileges*
 
 ### Creating the server
@@ -52,8 +56,10 @@ The Server will then obtain it's external IP and print its metadata.
 **Clients are not required to enable SSL to connect - however if enabled, clients also require the server name (key) set.**
 
 ### Stucture
-C# : private static void CallBack(IAsyncResult ar);
-Asyncronous CallBack method are used to handle multiple clients
+```
+private static void CallBack(IAsyncResult ar);
+```
+C# Asyncronous CallBack method are used to handle multiple clients
 
 ### Clients
 **Connect:** On connectiong a client's metadata is stored as it's key and stored in the connected clients list.
