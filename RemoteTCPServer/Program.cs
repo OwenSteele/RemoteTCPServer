@@ -122,7 +122,7 @@ namespace RemoteTCPServer
                     Console.Write($"[{currentClientPos}]:");
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
                     Console.WriteLine($"{currentClient.MachineName}|{currentClient.IP}:{currentClient.CSocket.Handle}" +
-                        $"{((currentClient.CUser != null) ? $"('{currentClient.CUser.ID}', {currentClient.CUser.GetSecurity()})" : "")}");
+                        $"{((currentClient.CUser != null) ? $"('{currentClient.CUser.ID}', {currentClient.CUser.GetAccess()})" : "")}");
                     Console.ForegroundColor = ConsoleColor.Cyan;
                     Console.WriteLine($"      $ '{text}'");
 

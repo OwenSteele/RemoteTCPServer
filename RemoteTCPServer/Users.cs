@@ -22,7 +22,7 @@ namespace RemoteTCPServer
 
         public bool AllowedAccess(int accessRequired) => (_securityLevel ?? 10000) <= accessRequired;
         public bool CheckPassword(string attempt) => _password.SequenceEqual(Encoding.ASCII.GetBytes(attempt));
-        public int? GetSecurity() => _securityLevel;        
+        public int? GetAccess() => _securityLevel;
     }
     public class Security
     {
@@ -43,14 +43,18 @@ namespace RemoteTCPServer
         }
         public string GetState(int property)
         {
-            ///0=message, 1=
+            int secValue = -1;
+            if (property == 0) secValue = _messaging;
+            else if (property == 1) secValue = _fileTransfer;
+            else return "Invalid request.";
+
             Dictionary<int, string> states = new()
             {
                 { 0, "Private" },
                 { 1, "Prompt" },
                 { 2, "Auto Accept" }
             };
-            return states.GetValueOrDefault(Range(2));
+            return states.GetValueOrDefault(Range(secValue));
         }
 
         private int Range(int x, int upper = 2)
@@ -69,11 +73,13 @@ namespace RemoteTCPServer
             _users.Add(new User("admin", "12345678", 0));
             _users.Add(new User("owen", "steele", 1));
             _users.Add(new User("jack", "warren", 1));
+            _users.Add(new User("user", "password", 1));
         }
         internal static User GetUser(string id) => _users.FirstOrDefault(u => u.ID == id) ?? _users[0];
 
         internal static bool AddUser(string[] details) 
         {
+            ///[0]=ID, [1]=pwd
             if (_users.FirstOrDefault(u => u.ID == details[0]) == null)
             {
                 _users.Add(new User(details[0], details[1], 1));

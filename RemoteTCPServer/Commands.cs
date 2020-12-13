@@ -81,7 +81,9 @@ namespace RemoteTCPServer
                 { "sendfile", FileSentToServer },
                 { "getfile", FileByClientRequest },
                 { "setdir", SetServerDirPath },
-                { "message", Messaging}
+                { "message", Messaging},
+                { "addnewuser", AddNewUser },
+                { "security", UserSecurity }
             };
 
             public static string directoryPath = null;
@@ -257,6 +259,66 @@ namespace RemoteTCPServer
                 if (promptRequired == 1) return "|request";
                 else if (promptRequired != 2) throw new ArgumentOutOfRangeException();
                 return "";
+            }
+            private static string AddNewUser(ServerClient serverClient, string[] fileData)
+            {
+                if (!serverClient.CUser.AllowedAccess(0)) return "Access Level not high enough.";
+
+                string help = "Add a new temporary user to the server, this user will not be stored once the server closes.\n" +
+                   "Only the admin can create a new user\n\n" +
+                   $"Syntax: admin addnewuser <newuserID> <newuserPassword>\n" +
+                   $"   e.g. admin addnewuser owen steele\n\n" +
+                   $"This creates a new user, to login to this user as a client:\n" +
+                   $"& login\n" +
+                   $"user: owen\n" +
+                   $"password: steele\n\n" +
+                   $"A new user has by default basic-elevated privileges.";
+
+                if (fileData.Length < 4) return help;
+                string[] details = { fileData[2], fileData[3] };
+
+                if (UserFactory.AddUser(details)) return "New user added successfully.";
+                else return "Error new user could not be added.";
+            }
+            private static string UserSecurity(ServerClient serverClient, string[] fileData)
+            {
+                if (serverClient.CUser == null) return "Access Level not high enough.";
+
+                string help = "\n---Current Security settings---\n" +
+                   $"Messaging: {serverClient.CUser.SecurityState.GetState(0)}\n" +
+                   $"File Transfer: {serverClient.CUser.SecurityState.GetState(1)}\n\n" +
+                   $"To change your security setting enter:\n" +
+                   $"   Syntax: {serverClient.CUser.ID} security messaging [n]\n" +
+                   $"   Syntax: {serverClient.CUser.ID} security filetransfer [n]\n" +
+                   $"      where [n] = 0, 1 or 2\n" +
+                   $"      0 = private (cannot be contacted), 1 = prompt me on request, 2 = auto accept any requests.\n\n" +
+                   $"   e.g. {serverClient.CUser.ID} security messaging 1\n" +
+                   $"   sets messaging to 'on prompt'.\n\n";
+
+                if (fileData.Length < 4) return help;
+
+                int securityState = -1;
+
+                if (fileData[2] == "messaging")
+                {
+                    if (!Int32.TryParse(fileData[3], out securityState)) return "Invalid entry for security state, must be 0, 1, 2, only.";
+                    if (securityState >= 0 && securityState <= 2)
+                    {
+                        serverClient.CUser.SecurityState.Messaging = securityState;
+                        return $"Messaging security changed to: {serverClient.CUser.SecurityState.GetState(0)}";
+                    }
+                }
+                else if (fileData[2] == "messaging")
+                {
+                    if (!Int32.TryParse(fileData[3], out securityState)) return "Invalid entry for security state, must be 0, 1, 2, only.";
+                    if (securityState >= 0 && securityState <= 2)
+                    {
+                        serverClient.CUser.SecurityState.FileTransfer = securityState;
+                        return $"Messaging security changed to: {serverClient.CUser.SecurityState.GetState(1)}";
+                    }
+                }
+                else return "Invalid security call\n\n" + help;
+                return "Error security could not be changed.";
             }
         }
     }
