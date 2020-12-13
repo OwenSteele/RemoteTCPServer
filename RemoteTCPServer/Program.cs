@@ -61,9 +61,9 @@ namespace RemoteTCPServer
             {
                 SP.ExternalIP = new WebClient().DownloadString("http://icanhazip.com");
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                SP.ExternalIP = e.Message;
+                SP.ExternalIP = "IP retrieval timed out.";
             }
 
             SP.Serversocket.BeginAccept(new AsyncCallback(AcceptCallBack), null);
