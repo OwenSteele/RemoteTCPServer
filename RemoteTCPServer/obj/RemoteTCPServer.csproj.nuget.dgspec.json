@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\owenf\\source\\repos\\RemoteTCPServer\\RemoteTCPServer\\RemoteTCPServer.csproj": {}
+    "C:\\Users\\owenf\\source\\repos\\TCP\\server\\RemoteTCPServer\\RemoteTCPServer\\RemoteTCPServer.csproj": {}
   },
   "projects": {
-    "C:\\Users\\owenf\\source\\repos\\RemoteTCPServer\\RemoteTCPServer\\RemoteTCPServer.csproj": {
+    "C:\\Users\\owenf\\source\\repos\\SQLNet\\SQLNet\\SQLNet.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\owenf\\source\\repos\\RemoteTCPServer\\RemoteTCPServer\\RemoteTCPServer.csproj",
-        "projectName": "RemoteTCPServer",
-        "projectPath": "C:\\Users\\owenf\\source\\repos\\RemoteTCPServer\\RemoteTCPServer\\RemoteTCPServer.csproj",
+        "projectUniqueName": "C:\\Users\\owenf\\source\\repos\\SQLNet\\SQLNet\\SQLNet.csproj",
+        "projectName": "SQLNet",
+        "projectPath": "C:\\Users\\owenf\\source\\repos\\SQLNet\\SQLNet\\SQLNet.csproj",
         "packagesPath": "C:\\Users\\owenf\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\owenf\\source\\repos\\RemoteTCPServer\\RemoteTCPServer\\obj\\",
+        "outputPath": "C:\\Users\\owenf\\source\\repos\\SQLNet\\SQLNet\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Microsoft\\Xamarin\\NuGet\\"
@@ -43,6 +43,92 @@
       "frameworks": {
         "net5.0": {
           "targetAlias": "net5.0",
+          "dependencies": {
+            "MySql.Data": {
+              "target": "Package",
+              "version": "[8.0.22, )"
+            },
+            "SQLKata": {
+              "target": "Package",
+              "version": "[2.2.0, )"
+            },
+            "SqlKata.Execution": {
+              "target": "Package",
+              "version": "[2.2.0, )"
+            },
+            "System.Data.SqlClient": {
+              "target": "Package",
+              "version": "[4.8.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.101\\RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\owenf\\source\\repos\\TCP\\server\\RemoteTCPServer\\RemoteTCPServer\\RemoteTCPServer.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\owenf\\source\\repos\\TCP\\server\\RemoteTCPServer\\RemoteTCPServer\\RemoteTCPServer.csproj",
+        "projectName": "RemoteTCPServer",
+        "projectPath": "C:\\Users\\owenf\\source\\repos\\TCP\\server\\RemoteTCPServer\\RemoteTCPServer\\RemoteTCPServer.csproj",
+        "packagesPath": "C:\\Users\\owenf\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\owenf\\source\\repos\\TCP\\server\\RemoteTCPServer\\RemoteTCPServer\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Microsoft\\Xamarin\\NuGet\\"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\owenf\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net5.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net5.0": {
+            "targetAlias": "net5.0",
+            "projectReferences": {
+              "C:\\Users\\owenf\\source\\repos\\SQLNet\\SQLNet\\SQLNet.csproj": {
+                "projectPath": "C:\\Users\\owenf\\source\\repos\\SQLNet\\SQLNet\\SQLNet.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net5.0": {
+          "targetAlias": "net5.0",
+          "dependencies": {
+            "SqlKata": {
+              "target": "Package",
+              "version": "[2.2.0, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

@@ -5,6 +5,8 @@ using System.Text;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using SqlKata;
+using SQLNet;
 
 namespace RemoteTCPServer
 {
@@ -83,7 +85,9 @@ namespace RemoteTCPServer
                 { "setdir", SetServerDirPath },
                 { "message", Messaging},
                 { "addnewuser", AddNewUser },
-                { "security", UserSecurity }
+                { "security", UserSecurity },
+                { "sql", SqlCommands },
+
             };
 
             public static string directoryPath = null;
@@ -320,6 +324,68 @@ namespace RemoteTCPServer
                 else return "Invalid security call\n\n" + help;
                 return "Error security could not be changed.";
             }
+        
+            private static string SqlCommands(ServerClient serverClient, string[] input)
+            {
+                string help = "HELP: sql";
+
+                Dictionary<string, (int, int)> commands = new()
+                {
+                    { "command", (0, 1) },
+                    { "query", (1, 1) },
+                    { "init", (99, 0) }
+
+                };
+
+                if (!serverClient.CUser.AllowedAccess(1)) return "Access Level not high enough.";
+
+                if (!serverClient.CUser.AllowedAccess(1)) return "Access Level not high enough.";
+                if (input.Length < 4) return help;
+
+                string subCommand = input[2];
+                string data = null;
+                for (int i = 3; i < input.Length; i++) data += input[i] + ' ';
+                data.TrimEnd();
+
+                if (String.IsNullOrWhiteSpace(subCommand)) return help;
+
+                (int, int) values = commands.FirstOrDefault(c => c.Key.ToLower() == subCommand.ToLower()).Value;
+
+                if (!serverClient.CUser.AllowedAccess(values.Item2)) return "Access Level not high enough for this SQL commands";
+
+                switch (values.Item1)
+                {
+                    case 0:
+                        
+                        if (serverClient.sqlKata.SQLCommand(data)) return "SQL command successful";
+                        return "Could not complete SQL command";
+
+                    case 1:
+                        if (input.Length < 4) return "Returns data on a table in the current DB\n" +
+                             "1. table name";
+
+                        string result = serverClient.sqlKata.QueryAll("TCPServer",input[3]);
+                        if (result == null) return $"Could not complete SQL query, check '{input[3]}' is a table name";
+                        return result;
+
+                    case 99:
+                        List<string> optionals = new();                        
+                        if (input.Length < 6) return "To initialize a MySQL database server connection, you must include the \n" +
+                                "1.database name\n" +
+                                "2.userid\n" +
+                                "3.password" +
+                                "4.hostname [optional, default = 'localhost']";
+                        else for (int e = 6; e < input.Length; e++) optionals.Add(input[e]);                        
+
+                        bool initSuccess = serverClient.sqlKata.Initialize(input[3], input[4], input[5],
+                            ((optionals.Count == 0) ? null :optionals[0]));
+
+                        if (!initSuccess) return $"ERROR: could not connect to the server";
+                        return "Connected to server";
+
+                    default: return "invalid sql command" + help;
+                }
+            } 
         }
     }
 }

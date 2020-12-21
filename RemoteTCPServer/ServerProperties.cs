@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SQLNet;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -16,6 +17,8 @@ namespace RemoteTCPServer
         public static Socket Serversocket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         public static int ServerPort = 0;
         public static string ExternalIP = null;
+
+        public static bool SqlInitialised = false;
 
         public static bool SslEnabled = false;
         public static X509Certificate ServerCertificate = null;

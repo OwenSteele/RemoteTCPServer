@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SQLNet;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -14,6 +15,8 @@ namespace RemoteTCPServer
         public User CUser { get; set; }
         public string MachineName { get; set; }
         public IPAddress IP { get; set; }
+
+        public Kata sqlKata { get; set; } = new Kata();
 
         public bool DetailsSent { get; set; } = false;
 
