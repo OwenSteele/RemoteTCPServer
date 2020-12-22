@@ -18,7 +18,7 @@ namespace RemoteTCPServer
         public static int ServerPort = 0;
         public static string ExternalIP = null;
 
-        public static bool SqlInitialised = false;
+        public static string[] SqlInfo = new string[4]; // servername, dbname, user id, password
 
         public static bool SslEnabled = false;
         public static X509Certificate ServerCertificate = null;

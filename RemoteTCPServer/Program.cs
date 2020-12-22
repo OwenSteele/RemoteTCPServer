@@ -86,11 +86,11 @@ namespace RemoteTCPServer
             }
             catch (SocketException ex)
             {
-                Console.WriteLine(ex.Message);
+                ExceptionHandling.Print(ex);
             }
             catch (ObjectDisposedException ex)
             {
-                Console.WriteLine(ex.Message);
+                ExceptionHandling.Print(ex);
             }
         }
         private static void RecieveCallBAck(IAsyncResult ar)
@@ -138,17 +138,16 @@ namespace RemoteTCPServer
                 }
                 catch (SocketException ex)
                 {
-                    Console.Write(ex.Message);
-                    RemoveClient(currentClient,ex.Message);
+                    RemoveClient(currentClient,ex);
                 }
                 catch (ObjectDisposedException ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    ExceptionHandling.Print(ex);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                ExceptionHandling.Print(ex);
             }
         }
         public static void PrepareSend(int pos, string message, Socket socket)
@@ -229,24 +228,25 @@ namespace RemoteTCPServer
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    ExceptionHandling.Print(ex);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                ExceptionHandling.Print(ex);
             }
             return false;
         }
-        private static void RemoveClient(ServerClient client, string message = null)
+        private static void RemoveClient(ServerClient client, Exception ex)
         {
+            ExceptionHandling.Print(ex);
             if (client != null)
             {
                 int pos = SP.Clients.FindIndex(s => s.CSocket == client.CSocket);
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.Write($"\n[{pos + 1}]:");
                 Console.ForegroundColor = ConsoleColor.Gray;
-                Console.WriteLine($" {message}");
+                Console.WriteLine($" {ex.Message}");
                 if (pos > -1) SP.Clients.RemoveAt(pos);
             }
             if (client != null) Console.WriteLine($"     Client [{client.MachineName} | {client.IP}:{client.CSocket.Handle}] removed from list");

@@ -164,9 +164,7 @@ namespace RemoteTCPServer
                 }
                 catch (Exception ex)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(ex.Message);
-                    Console.ForegroundColor = ConsoleColor.Gray;
+                    ExceptionHandling.Print(ex);
                     return "Could not save file to server";
                 }
                 return "File saved to server successfully";
@@ -327,61 +325,90 @@ namespace RemoteTCPServer
         
             private static string SqlCommands(ServerClient serverClient, string[] input)
             {
-                string help = "HELP: sql";
-
                 Dictionary<string, (int, int)> commands = new()
                 {
-                    { "command", (0, 1) },
-                    { "query", (1, 1) },
+                    { "command", (1, 1) },
+                    { "query", (2, 1) },
                     { "init", (99, 0) }
 
-                };
+                };               
 
-                if (!serverClient.CUser.AllowedAccess(1)) return "Access Level not high enough.";
+                string avaCmds = null;
+                foreach (var cmd in commands)
+                {
+                    if (serverClient.CUser.AllowedAccess(cmd.Value.Item2)) avaCmds += $"    {cmd.Key}\n";
+                }
+                string help = "\nHELP: sql commands\n" +
+                    "LIST (commands above your access level are not shown):\n" +
+                    $"{avaCmds}\n" +
+                    $"Syntax: {serverClient.CUser.ID} sql <command>\n" +
+                    $"To see the 'help' for each of these commands type only the above,\n" +
+                    $"        e.g. '{serverClient.CUser.ID} sql query\n\n" +
+                    $"All sql queries must use sql syntax and end with a ';'\n" +
+                    $"        e.g. '{serverClient.CUser.ID} sql query DESCRIBE exampletable;'";                
 
-                if (!serverClient.CUser.AllowedAccess(1)) return "Access Level not high enough.";
-                if (input.Length < 4) return help;
+                if (!serverClient.CUser.AllowedAccess(1) || avaCmds == null) return "Access Level not high enough.";
+
+                if (input.Length < 3) return help;
 
                 string subCommand = input[2];
                 string data = null;
-                for (int i = 3; i < input.Length; i++) data += input[i] + ' ';
-                data.TrimEnd();
+                if (input.Length > 3)
+                {
+                    for (int i = 3; i < input.Length; i++) data += input[i] + ' ';
+                    data.Trim();
 
+                    if (!data.EndsWith(';')) return "SQL syntax error: must end in with semicolon ';'";
+                }
                 if (String.IsNullOrWhiteSpace(subCommand)) return help;
 
                 (int, int) values = commands.FirstOrDefault(c => c.Key.ToLower() == subCommand.ToLower()).Value;
 
-                if (!serverClient.CUser.AllowedAccess(values.Item2)) return "Access Level not high enough for this SQL commands";
+                if (!serverClient.CUser.AllowedAccess(values.Item2)) return "Access Level not high enough for this SQL command";
 
                 switch (values.Item1)
                 {
-                    case 0:
-                        
-                        if (serverClient.sqlKata.SQLCommand(data)) return "SQL command successful";
+                    case 1:
+                        if(SP.SqlInfo[0].Length == 0 || data == null) return "SQL server details must be setup first. Use command:\n" +
+                                $"{serverClient.CUser.ID} 'sql init <databaseName> <user id> <user password> <optional:hostname>'\n" +
+                                $"e.g. {serverClient.CUser.ID} 'sql init database1 root password' - optionals are set to their default values.";
+
+                        if (serverClient.sqlKata.SQLCommand(SP.SqlInfo, data)) return "SQL command successful";
                         return "Could not complete SQL command";
 
-                    case 1:
-                        if (input.Length < 4) return "Returns data on a table in the current DB\n" +
+                    case 2:
+                        if (SP.SqlInfo[0].Length == 0 ) return "SQL server details must be setup first. Use command:\n" +
+                                 $"{serverClient.CUser.ID} 'sql init <databaseName> <user id> <user password> <optional:hostname>'\n" +
+                                 $"e.g. {serverClient.CUser.ID} 'sql init database1 root password' - optionals are set to their default values.";
+
+                        if (data == null) return "Returns data related to query from current SQL server\n" +
                              "1. table name";
 
-                        string result = serverClient.sqlKata.QueryAll("TCPServer",input[3]);
+                        string result = serverClient.sqlKata.Query(SP.SqlInfo, data);
                         if (result == null) return $"Could not complete SQL query, check '{input[3]}' is a table name";
                         return result;
 
                     case 99:
                         List<string> optionals = new();                        
-                        if (input.Length < 6) return "To initialize a MySQL database server connection, you must include the \n" +
-                                "1.database name\n" +
-                                "2.userid\n" +
-                                "3.password" +
-                                "4.hostname [optional, default = 'localhost']";
+                        if (input.Length < 5 || data == null) return "To initialize a MySQL database server connection, you must include the \n" +
+                                "1.userid\n" +
+                                "2.password\n" +
+                                "3.hostname [optional if port is 3006 too, default = 'localhost']\n" +
+                                "4.port [optional, default = '3306']\n" +
+                                "    Syntax: '{serverClient.CUser.ID} sql init userID password'\n" +
+                                "            '{serverClient.CUser.ID} sql init userID password hostName'\n" +
+                                "            '{serverClient.CUser.ID} sql init userID password hostName portNumber'\n";
+
                         else for (int e = 6; e < input.Length; e++) optionals.Add(input[e]);                        
 
-                        bool initSuccess = serverClient.sqlKata.Initialize(input[3], input[4], input[5],
-                            ((optionals.Count == 0) ? null :optionals[0]));
+                        SP.SqlInfo[0] = (optionals.Count == 0) ? "localhost" : optionals[0];
+                        SP.SqlInfo[1] = (optionals.Count == 1) ? "3306" : optionals[1];
+                        SP.SqlInfo[2] = input[3];
+                        SP.SqlInfo[3] = input[4];
 
-                        if (!initSuccess) return $"ERROR: could not connect to the server";
-                        return "Connected to server";
+                        return "Server data stored - 'WARNING: this has not been checked, errors will only become apparent when trying to contact the server'\n\n" +
+                            "You must switch a to database upon connection!\n" +
+                            $"   '{serverClient.CUser.ID} sql command USE <databasename>'";
 
                     default: return "invalid sql command" + help;
                 }
