@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\SQLNet\SQLNet\SQLNet.csproj" />
+    <ProjectReference Include="..\..\sqlnet\SQLNet\SQLNet.csproj" />
   </ItemGroup>
 
 </Project>

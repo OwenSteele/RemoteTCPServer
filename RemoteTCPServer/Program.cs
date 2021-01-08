@@ -1,26 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Security.Cryptography.X509Certificates;
-using System.Net.Security;
-using System.Security.Authentication;
+using RemoteTCPServer.Commands;
+using System.Collections.Generic;
 
 namespace RemoteTCPServer
 {
     internal class Server
-    {   
+    {
         static void Main()
         {
             Console.Title = "OS SERVER";
             SetupServer(SP.ServerName);
+
             CreateUsers();
+            CommandFactory.CreateCommands();
 
             Console.WriteLine();
             Console.Write("please wait...");
-            Console.WriteLine($"\r {Commands.ServerDetails()}");
+            Console.WriteLine($"\r {new OpenCommands().ServerDetails()}");
             Console.WriteLine("---Ready for SP.Clients---\n");
 
             while (true) ;
@@ -116,7 +116,7 @@ namespace RemoteTCPServer
                     }
 
                     if (text.Contains("<<") && text.Contains(">>"))
-                        Commands.currentTag = text.Substring(text.IndexOf("<<"), (text.IndexOf(">>") - text.IndexOf("<<")) + 2);
+                        currentClient.OpenCommands.CurrentTag = text.Substring(text.IndexOf("<<"), (text.IndexOf(">>") - text.IndexOf("<<")) + 2);
 
                     Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.Write($"[{currentClientPos}]:");
@@ -130,7 +130,7 @@ namespace RemoteTCPServer
 
                     if (text.Contains("###`CLIENTINFO`###") && !SP.Clients.Find(s => s.CSocket == socket).DetailsSent)
                     {
-                        message = "Owen's TCP server 2020.\n\n" + Commands.ServerDetails() + "\n\n Type 'help' to see all commands";
+                        message = "Owen's TCP server 2020.\n\n" + currentClient.OpenCommands.ServerDetails() + "\n\n Type 'help' to see all commands";
                         SP.Clients.Find(s => s.CSocket == socket).DetailsSent = true;
                     }
 
@@ -182,37 +182,40 @@ namespace RemoteTCPServer
                 Console.WriteLine(ex.Message);
             }
         }
-        
+
         private static string ProcessRequest(string req, Socket socket)
         {
+            string invalidRequest = "Invalid request. Type 'help' for commands";
+            //Determine the destination of the request
+
             ServerClient serverClient = GetClient(socket);
-            if (req.Contains("<<") && req.Contains(">>"))
-            {
-                string functionTag = null;
-                functionTag = req.Substring(req.IndexOf("<<"), (req.IndexOf(">>") - req.IndexOf("<<")) + 2);
-                req = req.Substring(req.IndexOf(">>") + 2, req.Length - (req.IndexOf(">>") + 2));
-                if (Commands.Closed.commands.TryGetValue(functionTag, out Func<ServerClient, string[], string> calledFunction))
-                    return calledFunction(serverClient, req.Split('|'));
-            }
-            else
-            {
-                if (Commands.baseCommands.TryGetValue(req, out Func<ServerClient, string> calledFunction)) return calledFunction(serverClient);
 
-                if (serverClient.CUser == null) return "Invalid request. Type 'help' for commands";
-                if (serverClient.CUser.ID == null) return "Invalid request. Type 'help' for commands";
+            if (serverClient == null) throw new ArgumentNullException();
 
-                if (req.StartsWith(SP.Clients.Find(c => c.CSocket == socket).CUser.ID))
-                    {
-                        string[] reqs = req.Split(' ');
-                        if (reqs.Length >= 2)
-                        if (Commands.Users.commands.TryGetValue(reqs[1],
-                            out Func<ServerClient, string[], string> calledUserFunction)) return calledUserFunction(serverClient, reqs);
-                    }
-                    else return $"Invalid request. Type 'help' for commands.\n" +
-                            $"NOTE: For user commands, include user ID: '{serverClient.CUser.ID} {req}'.";
+            //closed commands
+            string closedResponse = serverClient.ClosedCommands.Call(req);
+            if (closedResponse != null) return closedResponse;
+
+            //user ID check
+            string clientUserID = null;
+            if (serverClient.CUser != null) clientUserID = SP.Clients.Find(c => c.CSocket == socket).CUser.ID;
+            
+            //user commands
+            if (clientUserID != null && req.StartsWith(clientUserID))
+            {
+                string userResponse = serverClient.UserCommands.Call(req);
+                if (userResponse != null) return userResponse;
             }
-            return "Invalid request. Type 'help' for commands";
+            else invalidRequest += "\nREMINDER: user commands must start with your user ID";
+                  
+            //open commands
+            string openResponse = serverClient.OpenCommands.Call(req);
+            if (openResponse != null) return openResponse;            
+
+            //no command found
+            return invalidRequest;
         }
+
         private static string RemoveNewLines(string text) => text.Replace("\n", "[nLn]");
         private static void CreateUsers() => UserFactory.Create();
         private static ServerClient GetClient(Socket socket) => SP.Clients.Find(c => c.CSocket == socket);
