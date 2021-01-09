@@ -38,7 +38,7 @@ namespace RemoteTCPServer.Commands
             List<Cmd> commands = new();
             ClosedCommands closedCommands = new();
 
-            commands.Add(new Cmd("<<login>>", closedCommands.LoginAttempt, "accessed when a client attempts to login"));
+            commands.Add(new Cmd("<<login>>", closedCommands.LoginAttempt, "SERVER SIDE ONLY - accessed internally when a client attempts to login"));
 
             return commands;
         }
@@ -47,17 +47,17 @@ namespace RemoteTCPServer.Commands
             List<Cmd> commands = new();
             UserCommands userCommands = new();
 
-            commands.Add(new Cmd("listclients",   userCommands.GetAllClients,       "", 0));
-            commands.Add(new Cmd("clientinfo",    userCommands.GetClientInfo,       "", 1));
-            commands.Add(new Cmd("kickclient",    userCommands.KickClient,          "", 0));
-            commands.Add(new Cmd("serverrestart", userCommands.RestartServer,       "", 0));
-            commands.Add(new Cmd("sendfile",      userCommands.FileSentToServer,    "", 1));
-            commands.Add(new Cmd("getfile",       userCommands.FileByClientRequest, "", 1));
-            commands.Add(new Cmd("setdir",        userCommands.SetServerDirPath,    "", 0));
-            commands.Add(new Cmd("message",       userCommands.Messaging,           "", 2));
-            commands.Add(new Cmd("addnewuser",    userCommands.AddNewUser,          "", 0));
-            commands.Add(new Cmd("security",      userCommands.UserSecurity,        "", 1));
-            commands.Add(new Cmd("sql",           userCommands.SqlCommands,         "", 1));
+            commands.Add(new Cmd("listclients",   userCommands.GetAllClients,       "Returns connection info for every client", 0));
+            commands.Add(new Cmd("clientinfo",    userCommands.GetClientInfo,       "Returns connection info about this client", 1));
+            commands.Add(new Cmd("kickclient",    userCommands.KickClient,          "TBI - Terminates a clients connection to the host", 0));
+            commands.Add(new Cmd("serverrestart", userCommands.RestartServer,       "IIP - Restarts the server entity, currently cannot be done remotely", 0));
+            commands.Add(new Cmd("sendfile",      userCommands.FileSentToServer,    "Transfers a file from the client to the host (req: dir to be set)", 1));
+            commands.Add(new Cmd("getfile",       userCommands.FileByClientRequest, "Transfers a file from the host to the client (req: dir to be set)", 1));
+            commands.Add(new Cmd("setdir",        userCommands.SetServerDirPath,    "Sets the path for file transfer on the host machine, required for host-client file transfer", 0));
+            commands.Add(new Cmd("message",       userCommands.Messaging,           "Sends a message to another connected client, only non-private clients can be messaged", 2));
+            commands.Add(new Cmd("addnewuser",    userCommands.AddNewUser,          "Adds a server-entity-lifetime user.", 0));
+            commands.Add(new Cmd("security",      userCommands.UserSecurity,        "Alters the security setting for this client (messaging and file transfer currently supported)", 1));
+            commands.Add(new Cmd("sql",           userCommands.GetSqlCommands,      "Interact with the attached SQL API to issue SQL commands to a database (req: 'sql init' command)", 1));
 
             return commands;
         }
@@ -66,9 +66,9 @@ namespace RemoteTCPServer.Commands
             List<Cmd> commands = new(); 
             SqlCommands sqlCommands = new();
 
-            commands.Add(new Cmd("command", sqlCommands.NonQuery,   "",1));
-            commands.Add(new Cmd("query",   sqlCommands.Query,      "",1));
-            commands.Add(new Cmd("init",    sqlCommands.Initialize, "",0));
+            commands.Add(new Cmd("command", sqlCommands.NonQuery,   "Send a non-query based command to the connected SQL database - Does not listen for a reply from the database",1));
+            commands.Add(new Cmd("query",   sqlCommands.Query,      "Send a query to the connected SQL database - Returns the response from the database", 1));
+            commands.Add(new Cmd("init",    sqlCommands.Initialize, "Initializes and connects to a SQL database entity, see command help. Required to send [non-]queries",0));
 
             return commands;
         }

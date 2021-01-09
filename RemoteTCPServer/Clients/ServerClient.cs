@@ -26,13 +26,6 @@ namespace RemoteTCPServer
         public ServerClient(Socket socket)
         {
             CSocket = socket;
-
-            //Fix circular
-            UserCommands.ClientOwner = this;
-            OpenCommands.ClientOwner = this;
-            ClosedCommands.ClientOwner = this;
-            SqlCommands.ClientOwner = this;
         }
-
     }
 }

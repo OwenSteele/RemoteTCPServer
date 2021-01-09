@@ -190,26 +190,27 @@ namespace RemoteTCPServer
 
             ServerClient serverClient = GetClient(socket);
 
-            if (serverClient == null) throw new ArgumentNullException();
+            if (serverClient == null) throw new ArgumentNullException(serverClient.ToString());
 
             //closed commands
-            string closedResponse = serverClient.ClosedCommands.Call(req);
+            string closedResponse = serverClient.ClosedCommands.Call(serverClient, req);
             if (closedResponse != null) return closedResponse;
 
             //user ID check
             string clientUserID = null;
-            if (serverClient.CUser != null) clientUserID = SP.Clients.Find(c => c.CSocket == socket).CUser.ID;
+            if (serverClient.CUser != null) //Double check required as CUser cannot be set to null on logout, must check ID
+                if (serverClient.CUser.ID != null) clientUserID = SP.Clients.Find(c => c.CSocket == socket).CUser.ID;
             
             //user commands
             if (clientUserID != null && req.StartsWith(clientUserID))
             {
-                string userResponse = serverClient.UserCommands.Call(req);
+                string userResponse = serverClient.UserCommands.Call(serverClient, req);
                 if (userResponse != null) return userResponse;
             }
             else invalidRequest += "\nREMINDER: user commands must start with your user ID";
                   
             //open commands
-            string openResponse = serverClient.OpenCommands.Call(req);
+            string openResponse = serverClient.OpenCommands.Call(serverClient, req);
             if (openResponse != null) return openResponse;            
 
             //no command found

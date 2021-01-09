@@ -56,7 +56,7 @@ namespace RemoteTCPServer
         {
             byte[] buffer = new byte[2048];
             StringBuilder messageData = new ();
-            int bytes = -1;
+            int bytes;
             do
             {
                 bytes = sslStream.Read(buffer, 0, buffer.Length);

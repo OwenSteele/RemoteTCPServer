@@ -9,8 +9,8 @@ namespace RemoteTCPServer
     {
         public string ID { get; init; }
         public Security SecurityState { get; set; } = new();
-        private byte[] _password;
-        private int? _securityLevel;
+        private readonly byte[] _password;
+        private readonly int? _securityLevel;
 
         public User(string id, string fullPath, int? level = null)
         {

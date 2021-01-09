@@ -12,7 +12,7 @@ namespace RemoteTCPServer
         {
             ConsoleColor currentForeColor = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"ERROR!{ex.TargetSite} threw exception '{ex.GetType().ToString()}'\n" +
+            Console.WriteLine($"ERROR!{ex.TargetSite} threw exception '{ex.GetType()}'\n" +
                 $"Message: '{ex.Message}'" +
                 $"{(additionalArgs == null ? "" :"\nDefined notes: "+additionalArgs)}");
             Console.ForegroundColor = currentForeColor;

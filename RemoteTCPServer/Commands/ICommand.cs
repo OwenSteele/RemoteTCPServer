@@ -4,6 +4,6 @@ namespace RemoteTCPServer.Commands
     public interface ICommand
     {
         public List<Cmd> Commands();
-        public string Call(string data);
+        public string Call(ServerClient clientOwner, string data);
     }
 }
